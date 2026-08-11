@@ -49,6 +49,10 @@ export const QuizScreen: React.FC<Props> = ({ lessonId, onFinish }) => {
   const unitId = isUnitTest ? lessonId.replace('unit_test:', '') : null;
   const optionLetters = ['A', 'B', 'C', 'D'];
 
+  // Track from vocab performance for Adaptive Learning
+  const [correctVocabIds, setCorrectVocabIds] = useState<string[]>([]);
+  const [incorrectVocabIds, setIncorrectVocabIds] = useState<string[]>([]);
+
   useEffect(() => {
     fetchLessonData();
   }, [lessonId]);
@@ -108,6 +112,23 @@ export const QuizScreen: React.FC<Props> = ({ lessonId, onFinish }) => {
     setIsAnswerChecked(true);
     if (correct) {
       setScore(score + 1);
+      // Track vocab linked to this question (match by word in prompt/answer)
+      const relatedVocab = vocabularies.find(v =>
+        currentQ.prompt?.toLowerCase().includes(v.word.toLowerCase()) ||
+        currentQ.correctAnswer?.toLowerCase().includes(v.word.toLowerCase())
+      );
+      if (relatedVocab) {
+        setCorrectVocabIds(prev => [...prev, relatedVocab.id]);
+      }
+    } else {
+      // Track incorrect vocab for spaced repetition review
+      const relatedVocab = vocabularies.find(v =>
+        currentQ.prompt?.toLowerCase().includes(v.word.toLowerCase()) ||
+        currentQ.correctAnswer?.toLowerCase().includes(v.word.toLowerCase())
+      );
+      if (relatedVocab) {
+        setIncorrectVocabIds(prev => [...prev, relatedVocab.id]);
+      }
     }
   };
 
@@ -132,6 +153,13 @@ export const QuizScreen: React.FC<Props> = ({ lessonId, onFinish }) => {
       } else {
         const realLessonId = lesson.id || lessonId;
         res = await api.post(`/lessons/${realLessonId}/complete`, { score: finalScore });
+
+        // Gửi mastery data cho Adaptive Learning (non-blocking)
+        api.post('/adaptive/update-mastery', {
+          lessonId: realLessonId,
+          correctVocabIds: [...new Set(correctVocabIds)],
+          incorrectVocabIds: [...new Set(incorrectVocabIds)],
+        }).catch(() => {}); // Không block UI nếu fail
       }
       setTestResult(res.data);
       setXpEarned(res.data?.xpEarned || (finalScore >= 80 ? 100 : 25));

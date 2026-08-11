@@ -9,6 +9,7 @@ interface Props {
   onNavigateSubscription: () => void;
   onNavigateVoiceBattle: () => void;
   onNavigateAdmin: () => void;
+  onNavigateAdaptive: () => void;
 }
 
 export const HomeScreen: React.FC<Props> = ({
@@ -17,6 +18,7 @@ export const HomeScreen: React.FC<Props> = ({
   onNavigateSubscription,
   onNavigateVoiceBattle,
   onNavigateAdmin,
+  onNavigateAdaptive,
 }) => {
   const { user, logout, fetchProfile } = useAuthStore();
   const tier = user?.subscriptionTier || 'FREE';
@@ -160,6 +162,36 @@ export const HomeScreen: React.FC<Props> = ({
 
           <View style={styles.roleplayButton}>
             <Text style={styles.roleplayButtonText}>Bắt Đầu Nhập Vai 💬 ➔</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Adaptive Learning Card */}
+        <Text style={styles.sectionTitle}>Lộ Trình Cá Nhân Hóa 🎯</Text>
+        <TouchableOpacity style={styles.adaptiveCard} onPress={onNavigateAdaptive} activeOpacity={0.9}>
+          <View style={styles.adaptiveHeader}>
+            <Text style={styles.adaptiveBadge}>AI • ADAPTIVE LEARNING</Text>
+            <Text style={styles.adaptiveIcon}>🧠</Text>
+          </View>
+          <Text style={styles.adaptiveTitle}>Lộ Trình Học Cá Nhân Của Bạn</Text>
+          <Text style={styles.adaptiveDesc}>
+            AI phân tích điểm số, đề xuất bài cần ôn và theo dõi tiến độ từng chủ đề theo thời gian thực.
+          </Text>
+          <View style={styles.adaptiveStats}>
+            <View style={styles.adaptiveStat}>
+              <Text style={styles.adaptiveStatIcon}>📊</Text>
+              <Text style={styles.adaptiveStatText}>Phân Tích Điểm</Text>
+            </View>
+            <View style={styles.adaptiveStat}>
+              <Text style={styles.adaptiveStatIcon}>🔁</Text>
+              <Text style={styles.adaptiveStatText}>Spaced Repetition</Text>
+            </View>
+            <View style={styles.adaptiveStat}>
+              <Text style={styles.adaptiveStatIcon}>🎯</Text>
+              <Text style={styles.adaptiveStatText}>Bài Học Phù Hợp</Text>
+            </View>
+          </View>
+          <View style={styles.adaptiveButton}>
+            <Text style={styles.adaptiveButtonText}>Xem Lộ Trình Của Tôi 🎯 ➔</Text>
           </View>
         </TouchableOpacity>
 
@@ -521,5 +553,77 @@ const styles = StyleSheet.create({
     color: '#4F46E5',
     fontSize: 15,
     fontWeight: 'bold',
+  },
+
+  // ===== Adaptive Learning Card =====
+  adaptiveCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#7C3AED',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  adaptiveHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  adaptiveBadge: {
+    color: '#A78BFA',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  adaptiveIcon: { fontSize: 26 },
+  adaptiveTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: 8,
+  },
+  adaptiveDesc: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  adaptiveStats: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  adaptiveStat: {
+    flex: 1,
+    backgroundColor: '#1E293B',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  adaptiveStatIcon: { fontSize: 18 },
+  adaptiveStatText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  adaptiveButton: {
+    backgroundColor: '#7C3AED',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  adaptiveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
   },
 });
