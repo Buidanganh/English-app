@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView, Alert, Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import { api } from '../services/api';
+import { RewardedAdButton } from '../components/RewardedAdButton';
 
 interface Vocabulary {
   id: string;
@@ -356,6 +357,17 @@ export const QuizScreen: React.FC<Props> = ({ lessonId, onFinish }) => {
       <TouchableOpacity style={styles.finishButton} onPress={onFinish} activeOpacity={0.85}>
         <Text style={styles.finishButtonText}>Trở về Danh Sách Bài Học 📚</Text>
       </TouchableOpacity>
+
+      {/* 📺 Rewarded Ad — Xem quảng cáo nhận thêm XP */}
+      <View style={styles.adSection}>
+        <Text style={styles.adSectionLabel}>Muốn kiếm thêm XP?</Text>
+        <RewardedAdButton
+          rewardType="XP"
+          onRewarded={() => {
+            Alert.alert('🎉 +50 XP!', 'Bạn đã nhận thêm 50 XP từ quảng cáo!');
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -734,5 +746,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  adSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    gap: 8,
+  },
+  adSectionLabel: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });

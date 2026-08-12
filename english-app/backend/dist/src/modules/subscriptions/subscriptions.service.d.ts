@@ -85,6 +85,65 @@ export declare class SubscriptionsService {
         message: string;
         paymentRequestId: string;
     }>;
+    static readonly XP_REDEEM_OPTIONS: ({
+        tier: "PLUS";
+        durationMonths: number;
+        xpRequired: number;
+        label: string;
+        description: string;
+        color: string;
+        badge: string;
+    } | {
+        tier: "PRO";
+        durationMonths: number;
+        xpRequired: number;
+        label: string;
+        description: string;
+        color: string;
+        badge: string;
+    })[];
+    getXpRedeemOptions(userId: string): Promise<{
+        currentXp: number;
+        currentTier: string;
+        subscriptionExpiresAt: Date;
+        options: ({
+            canRedeem: boolean;
+            xpShortfall: number;
+            tier: "PLUS";
+            durationMonths: number;
+            xpRequired: number;
+            label: string;
+            description: string;
+            color: string;
+            badge: string;
+        } | {
+            canRedeem: boolean;
+            xpShortfall: number;
+            tier: "PRO";
+            durationMonths: number;
+            xpRequired: number;
+            label: string;
+            description: string;
+            color: string;
+            badge: string;
+        })[];
+    }>;
+    redeemXpForSubscription(userId: string, tier: 'PLUS' | 'PRO'): Promise<{
+        success: boolean;
+        message: string;
+        tier: "PRO" | "PLUS";
+        xpUsed: number;
+        remainingXp: number;
+        expiresAt: Date;
+        user: {
+            id: string;
+            email: string;
+            fullName: string;
+            subscriptionTier: string;
+            subscriptionExpiresAt: Date;
+            totalXp: number;
+        };
+    }>;
     upgrade(userId: string, tier: 'PLUS' | 'PRO', durationMonths: number): Promise<{
         message: string;
         user: {

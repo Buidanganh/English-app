@@ -8,11 +8,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var SubscriptionsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubscriptionsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
-let SubscriptionsService = class SubscriptionsService {
+let SubscriptionsService = SubscriptionsService_1 = class SubscriptionsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
@@ -226,6 +227,75 @@ let SubscriptionsService = class SubscriptionsService {
         });
         return { message: '❌ Đã từ chối thanh toán', paymentRequestId };
     }
+    async getXpRedeemOptions(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { totalXp: true, subscriptionTier: true, subscriptionExpiresAt: true },
+        });
+        if (!user)
+            throw new common_1.NotFoundException('Người dùng không tồn tại');
+        return {
+            currentXp: user.totalXp,
+            currentTier: user.subscriptionTier,
+            subscriptionExpiresAt: user.subscriptionExpiresAt,
+            options: SubscriptionsService_1.XP_REDEEM_OPTIONS.map(opt => ({
+                ...opt,
+                canRedeem: user.totalXp >= opt.xpRequired,
+                xpShortfall: Math.max(0, opt.xpRequired - user.totalXp),
+            })),
+        };
+    }
+    async redeemXpForSubscription(userId, tier) {
+        const option = SubscriptionsService_1.XP_REDEEM_OPTIONS.find(o => o.tier === tier);
+        if (!option)
+            throw new common_1.NotFoundException('Gói không hợp lệ');
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { totalXp: true, subscriptionTier: true, subscriptionExpiresAt: true },
+        });
+        if (!user)
+            throw new common_1.NotFoundException('Người dùng không tồn tại');
+        if (user.totalXp < option.xpRequired) {
+            throw new common_1.ForbiddenException(`Bạn cần ${option.xpRequired.toLocaleString()} XP để đổi gói này. Hiện tại bạn có ${user.totalXp.toLocaleString()} XP.`);
+        }
+        const now = new Date();
+        let expiresAt;
+        if (user.subscriptionTier === tier &&
+            user.subscriptionExpiresAt &&
+            new Date(user.subscriptionExpiresAt) > now) {
+            expiresAt = new Date(user.subscriptionExpiresAt);
+            expiresAt.setMonth(expiresAt.getMonth() + option.durationMonths);
+        }
+        else {
+            expiresAt = new Date();
+            expiresAt.setMonth(expiresAt.getMonth() + option.durationMonths);
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                totalXp: { decrement: option.xpRequired },
+                subscriptionTier: tier,
+                subscriptionExpiresAt: expiresAt,
+            },
+            select: {
+                id: true,
+                email: true,
+                fullName: true,
+                totalXp: true,
+                subscriptionTier: true,
+                subscriptionExpiresAt: true,
+            },
+        });
+        return {
+            success: true,
+            message: `🎉 Đổi XP thành công! Gói ${option.badge} đã được kích hoạt đến ${expiresAt.toLocaleDateString('vi-VN')}!`,
+            tier,
+            xpUsed: option.xpRequired,
+            remainingXp: updatedUser.totalXp,
+            expiresAt,
+            user: updatedUser,
+        };
+    }
     async upgrade(userId, tier, durationMonths) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user)
@@ -256,7 +326,27 @@ let SubscriptionsService = class SubscriptionsService {
     }
 };
 exports.SubscriptionsService = SubscriptionsService;
-exports.SubscriptionsService = SubscriptionsService = __decorate([
+SubscriptionsService.XP_REDEEM_OPTIONS = [
+    {
+        tier: 'PLUS',
+        durationMonths: 1,
+        xpRequired: 5000,
+        label: 'PLUS ⚡ 1 Tháng',
+        description: 'Vô hạn trái tim, mở khóa toàn bộ chủ đề, x1.5 XP',
+        color: '#38BDF8',
+        badge: '⚡ PLUS',
+    },
+    {
+        tier: 'PRO',
+        durationMonths: 1,
+        xpRequired: 10000,
+        label: 'PRO 👑 1 Tháng',
+        description: 'Vô hạn mọi tính năng, x2 XP & Streak, huy hiệu hoàng gia',
+        color: '#F59E0B',
+        badge: '👑 PRO',
+    },
+];
+exports.SubscriptionsService = SubscriptionsService = SubscriptionsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], SubscriptionsService);

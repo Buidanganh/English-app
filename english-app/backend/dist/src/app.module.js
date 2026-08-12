@@ -20,6 +20,7 @@ const voice_battle_module_1 = require("./modules/voice-battle/voice-battle.modul
 const admin_module_1 = require("./modules/admin/admin.module");
 const daily_rewards_module_1 = require("./modules/daily-rewards/daily-rewards.module");
 const adaptive_module_1 = require("./modules/adaptive/adaptive.module");
+const missions_module_1 = require("./modules/missions/missions.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -38,6 +39,7 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             daily_rewards_module_1.DailyRewardsModule,
             adaptive_module_1.AdaptiveModule,
+            missions_module_1.MissionsModule,
         ],
         controllers: [],
         providers: [],

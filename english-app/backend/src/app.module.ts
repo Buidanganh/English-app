@@ -11,6 +11,7 @@ import { VoiceBattleModule } from './modules/voice-battle/voice-battle.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { DailyRewardsModule } from './modules/daily-rewards/daily-rewards.module';
 import { AdaptiveModule } from './modules/adaptive/adaptive.module';
+import { MissionsModule } from './modules/missions/missions.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AdaptiveModule } from './modules/adaptive/adaptive.module';
     AdminModule,
     DailyRewardsModule,
     AdaptiveModule,
+    MissionsModule,
   ],
   controllers: [],
   providers: [],

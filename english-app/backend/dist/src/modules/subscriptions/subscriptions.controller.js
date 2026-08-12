@@ -45,6 +45,12 @@ let SubscriptionsController = class SubscriptionsController {
     async upgrade(req, dto) {
         return this.subscriptionsService.upgrade(req.user.id, dto.tier, dto.durationMonths);
     }
+    async getXpRedeemOptions(req) {
+        return this.subscriptionsService.getXpRedeemOptions(req.user.id);
+    }
+    async redeemXp(req, dto) {
+        return this.subscriptionsService.redeemXpForSubscription(req.user.id, dto.tier);
+    }
 };
 exports.SubscriptionsController = SubscriptionsController;
 __decorate([
@@ -131,6 +137,27 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], SubscriptionsController.prototype, "upgrade", null);
+__decorate([
+    (0, common_1.Get)('xp-redeem/options'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Lấy danh sách tùy chọn đổi XP & kiểm tra đủ điều kiện' }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "getXpRedeemOptions", null);
+__decorate([
+    (0, common_1.Post)('xp-redeem/confirm'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Dùng XP để kích hoạt gói PLUS/PRO ngay lập tức' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "redeemXp", null);
 exports.SubscriptionsController = SubscriptionsController = __decorate([
     (0, swagger_1.ApiTags)('Subscriptions - Gói Thành Viên'),
     (0, common_1.Controller)('subscriptions'),

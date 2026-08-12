@@ -16,6 +16,7 @@ import { ProfileAnalyticsScreen } from './src/screens/ProfileAnalyticsScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { AdminDashboardScreen } from './src/screens/AdminDashboardScreen';
 import { AdaptiveLearningScreen } from './src/screens/AdaptiveLearningScreen';
+import { MissionsScreen } from './src/screens/MissionsScreen';
 import { BottomNavbar, TabType } from './src/components/BottomNavbar';
 
 // Tự động tiêm CSS full height 100% cho html, body và #root trên trình duyệt Web
@@ -43,7 +44,7 @@ export default function App() {
   const [authScreen, setAuthScreen] = useState<'login' | 'register'>('login');
   
   // App Screen Flow
-  const [appScreen, setAppScreen] = useState<'home' | 'course' | 'quiz' | 'roleplay-list' | 'roleplay-chat' | 'roleplay-result' | 'subscription' | 'voice-battle' | 'profile' | 'leaderboard' | 'admin' | 'adaptive'>('home');
+  const [appScreen, setAppScreen] = useState<'home' | 'course' | 'quiz' | 'roleplay-list' | 'roleplay-chat' | 'roleplay-result' | 'subscription' | 'voice-battle' | 'profile' | 'leaderboard' | 'admin' | 'adaptive' | 'missions'>('home');
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
   const [roleplayResult, setRoleplayResult] = useState<any>(null);
@@ -118,6 +119,10 @@ export default function App() {
             setSelectedLessonId(null);
             fetchProfile(); // Cập nhật XP thưởng
             setCourseRefreshKey((prev) => prev + 1);
+            // Trigger cập nhật mission LESSON_COMPLETE (non-blocking)
+            import('./src/services/api').then(({ api }) => {
+              api.post('/missions/today').catch(() => {}); // refresh missions
+            }).catch(() => {});
             setAppScreen('course');
           }}
         />
@@ -219,7 +224,7 @@ export default function App() {
       );
     }
 
-    // 9. Màn hình Lộ Trình Học Cá Nhân Hóa AI (Adaptive Learning)
+    // 9. Lộ Trình Học Cá Nhân Hóa AI (Adaptive Learning)
     if (appScreen === 'adaptive') {
       return (
         <AdaptiveLearningScreen
@@ -232,6 +237,15 @@ export default function App() {
       );
     }
 
+    // 10. Màn hình Nhiệm Vụ Daily & Weekly
+    if (appScreen === 'missions') {
+      return (
+        <MissionsScreen
+          onBack={() => setAppScreen('home')}
+        />
+      );
+    }
+
     return (
       <HomeScreen
         onNavigateCourse={() => setAppScreen('course')}
@@ -240,6 +254,7 @@ export default function App() {
         onNavigateVoiceBattle={() => setAppScreen('voice-battle')}
         onNavigateAdmin={() => setAppScreen('admin')}
         onNavigateAdaptive={() => setAppScreen('adaptive')}
+        onNavigateMissions={() => setAppScreen('missions')}
       />
     );
   };

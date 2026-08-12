@@ -85,4 +85,24 @@ export class SubscriptionsController {
   async upgrade(@Request() req, @Body() dto: { tier: 'PLUS' | 'PRO'; durationMonths: number }) {
     return this.subscriptionsService.upgrade(req.user.id, dto.tier, dto.durationMonths);
   }
+
+  // ============================================================
+  // XP REDEEM — Đổi XP lấy gói VIP (kích hoạt ngay, không cần thanh toán)
+  // ============================================================
+
+  @Get('xp-redeem/options')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lấy danh sách tùy chọn đổi XP & kiểm tra đủ điều kiện' })
+  async getXpRedeemOptions(@Request() req) {
+    return this.subscriptionsService.getXpRedeemOptions(req.user.id);
+  }
+
+  @Post('xp-redeem/confirm')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Dùng XP để kích hoạt gói PLUS/PRO ngay lập tức' })
+  async redeemXp(@Request() req, @Body() dto: { tier: 'PLUS' | 'PRO' }) {
+    return this.subscriptionsService.redeemXpForSubscription(req.user.id, dto.tier);
+  }
 }

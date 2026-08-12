@@ -109,4 +109,48 @@ export declare class SubscriptionsController {
             totalXp: number;
         };
     }>;
+    getXpRedeemOptions(req: any): Promise<{
+        currentXp: number;
+        currentTier: string;
+        subscriptionExpiresAt: Date;
+        options: ({
+            canRedeem: boolean;
+            xpShortfall: number;
+            tier: "PLUS";
+            durationMonths: number;
+            xpRequired: number;
+            label: string;
+            description: string;
+            color: string;
+            badge: string;
+        } | {
+            canRedeem: boolean;
+            xpShortfall: number;
+            tier: "PRO";
+            durationMonths: number;
+            xpRequired: number;
+            label: string;
+            description: string;
+            color: string;
+            badge: string;
+        })[];
+    }>;
+    redeemXp(req: any, dto: {
+        tier: 'PLUS' | 'PRO';
+    }): Promise<{
+        success: boolean;
+        message: string;
+        tier: "PRO" | "PLUS";
+        xpUsed: number;
+        remainingXp: number;
+        expiresAt: Date;
+        user: {
+            id: string;
+            email: string;
+            fullName: string;
+            subscriptionTier: string;
+            subscriptionExpiresAt: Date;
+            totalXp: number;
+        };
+    }>;
 }

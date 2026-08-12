@@ -256,6 +256,111 @@ export class SubscriptionsService {
   }
 
   // ============================================================
+  // XP REDEEM — Đổi XP lấy gói VIP (không cần thanh toán tiền)
+  // ============================================================
+  static readonly XP_REDEEM_OPTIONS = [
+    {
+      tier: 'PLUS' as const,
+      durationMonths: 1,
+      xpRequired: 5000,
+      label: 'PLUS ⚡ 1 Tháng',
+      description: 'Vô hạn trái tim, mở khóa toàn bộ chủ đề, x1.5 XP',
+      color: '#38BDF8',
+      badge: '⚡ PLUS',
+    },
+    {
+      tier: 'PRO' as const,
+      durationMonths: 1,
+      xpRequired: 10000,
+      label: 'PRO 👑 1 Tháng',
+      description: 'Vô hạn mọi tính năng, x2 XP & Streak, huy hiệu hoàng gia',
+      color: '#F59E0B',
+      badge: '👑 PRO',
+    },
+  ];
+
+  async getXpRedeemOptions(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totalXp: true, subscriptionTier: true, subscriptionExpiresAt: true },
+    });
+    if (!user) throw new NotFoundException('Người dùng không tồn tại');
+
+    return {
+      currentXp: user.totalXp,
+      currentTier: user.subscriptionTier,
+      subscriptionExpiresAt: user.subscriptionExpiresAt,
+      options: SubscriptionsService.XP_REDEEM_OPTIONS.map(opt => ({
+        ...opt,
+        canRedeem: user.totalXp >= opt.xpRequired,
+        xpShortfall: Math.max(0, opt.xpRequired - user.totalXp),
+      })),
+    };
+  }
+
+  async redeemXpForSubscription(userId: string, tier: 'PLUS' | 'PRO') {
+    const option = SubscriptionsService.XP_REDEEM_OPTIONS.find(o => o.tier === tier);
+    if (!option) throw new NotFoundException('Gói không hợp lệ');
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totalXp: true, subscriptionTier: true, subscriptionExpiresAt: true },
+    });
+    if (!user) throw new NotFoundException('Người dùng không tồn tại');
+
+    // Kiểm tra đủ XP không
+    if (user.totalXp < option.xpRequired) {
+      throw new ForbiddenException(
+        `Bạn cần ${option.xpRequired.toLocaleString()} XP để đổi gói này. Hiện tại bạn có ${user.totalXp.toLocaleString()} XP.`
+      );
+    }
+
+    // Tính ngày hết hạn — nếu đã có gói cùng tier thì cộng thêm, không thì tính từ hôm nay
+    const now = new Date();
+    let expiresAt: Date;
+    if (
+      user.subscriptionTier === tier &&
+      user.subscriptionExpiresAt &&
+      new Date(user.subscriptionExpiresAt) > now
+    ) {
+      // Gia hạn thêm 1 tháng từ ngày hết hạn hiện tại
+      expiresAt = new Date(user.subscriptionExpiresAt);
+      expiresAt.setMonth(expiresAt.getMonth() + option.durationMonths);
+    } else {
+      expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + option.durationMonths);
+    }
+
+    // Trừ XP + nâng cấp gói trong 1 transaction
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        totalXp: { decrement: option.xpRequired },
+        subscriptionTier: tier,
+        subscriptionExpiresAt: expiresAt,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        totalXp: true,
+        subscriptionTier: true,
+        subscriptionExpiresAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: `🎉 Đổi XP thành công! Gói ${option.badge} đã được kích hoạt đến ${expiresAt.toLocaleDateString('vi-VN')}!`,
+      tier,
+      xpUsed: option.xpRequired,
+      remainingXp: updatedUser.totalXp,
+      expiresAt,
+      user: updatedUser,
+    };
+  }
+
+  // ============================================================
   // LEGACY: Direct upgrade (vẫn giữ cho admin có thể dùng trực tiếp)
   // ============================================================
   async upgrade(userId: string, tier: 'PLUS' | 'PRO', durationMonths: number) {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, ScrollView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { api } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { RewardedAdButton } from '../components/RewardedAdButton';
 
 interface Props {
   onNavigateCourse: () => void;
@@ -10,6 +11,7 @@ interface Props {
   onNavigateVoiceBattle: () => void;
   onNavigateAdmin: () => void;
   onNavigateAdaptive: () => void;
+  onNavigateMissions: () => void;
 }
 
 export const HomeScreen: React.FC<Props> = ({
@@ -19,14 +21,18 @@ export const HomeScreen: React.FC<Props> = ({
   onNavigateVoiceBattle,
   onNavigateAdmin,
   onNavigateAdaptive,
+  onNavigateMissions,
 }) => {
   const { user, logout, fetchProfile } = useAuthStore();
   const tier = user?.subscriptionTier || 'FREE';
   const [canClaimDaily, setCanClaimDaily] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [missionClaimableXp, setMissionClaimableXp] = useState(0);
+  const [missionCompletedCount, setMissionCompletedCount] = useState(0);
 
   useEffect(() => {
     checkDailyRewardStatus();
+    checkMissionStatus();
   }, []);
 
   const checkDailyRewardStatus = async () => {
@@ -35,6 +41,16 @@ export const HomeScreen: React.FC<Props> = ({
       setCanClaimDaily(res.data.canClaim);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const checkMissionStatus = async () => {
+    try {
+      const res = await api.get('/missions/today');
+      setMissionClaimableXp(res.data.claimableXp || 0);
+      setMissionCompletedCount((res.data.completedToday || 0) + (res.data.completedWeekly || 0));
+    } catch (err) {
+      // Bỏ qua nếu chưa có missions
     }
   };
 
@@ -109,6 +125,44 @@ export const HomeScreen: React.FC<Props> = ({
             </View>
           </TouchableOpacity>
         ) : null}
+
+        {/* Mission Quick Card */}
+        <TouchableOpacity style={styles.missionQuickCard} onPress={onNavigateMissions} activeOpacity={0.9}>
+          <View style={styles.missionQuickLeft}>
+            <Text style={styles.missionQuickIcon}>🎯</Text>
+            <View>
+              <Text style={styles.missionQuickTitle}>Nhiệm Vụ Hôm Nay</Text>
+              <Text style={styles.missionQuickSub}>
+                {missionCompletedCount > 0
+                  ? `✅ ${missionCompletedCount} nhiệm vụ hoàn thành`
+                  : 'Bắt đầu nhiệm vụ để nhận XP!'}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.missionQuickRight}>
+            {missionClaimableXp > 0 && (
+              <View style={styles.missionXpBadge}>
+                <Text style={styles.missionXpBadgeText}>+{missionClaimableXp} XP</Text>
+              </View>
+            )}
+            <Text style={styles.missionQuickArrow}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* 📺 Rewarded Ad — Chỉ hiện với user FREE để tạo động lực nâng cấp */}
+        {(user?.subscriptionTier === 'FREE' || !user?.subscriptionTier) && (
+          <View style={styles.adCard}>
+            <View style={styles.adCardHeader}>
+              <Text style={styles.adCardTitle}>⚡ Kiếm Thêm XP Miễn Phí</Text>
+              <Text style={styles.adCardSub}>Xem 1 quảng cáo ngắn • Không mất tiền</Text>
+            </View>
+            <View style={styles.adCardRow}>
+              <RewardedAdButton rewardType="XP" variant="compact" />
+              <RewardedAdButton rewardType="HEART" variant="compact" />
+              <RewardedAdButton rewardType="STREAK_FREEZE" variant="compact" />
+            </View>
+          </View>
+        )}
 
         {/* VIP Upgrade Banner */}
         <TouchableOpacity style={styles.vipBanner} onPress={onNavigateSubscription} activeOpacity={0.9}>
@@ -626,4 +680,44 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
   },
+
+  // ===== Mission Quick Card =====
+  missionQuickCard: {
+    backgroundColor: '#1C1A0E',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+  },
+  missionQuickLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  missionQuickIcon: { fontSize: 28 },
+  missionQuickTitle: { color: '#FFFFFF', fontWeight: '800', fontSize: 14, marginBottom: 2 },
+  missionQuickSub: { color: '#94A3B8', fontSize: 12, fontWeight: '500' },
+  missionQuickRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  missionXpBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  missionXpBadgeText: { color: '#0F172A', fontWeight: '900', fontSize: 12 },
+  missionQuickArrow: { color: '#F59E0B', fontSize: 22, fontWeight: 'bold' },
+
+  // ===== Ad Card =====
+  adCard: {
+    backgroundColor: '#0D1117',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    gap: 10,
+  },
+  adCardHeader: { gap: 2 },
+  adCardTitle: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
+  adCardSub: { color: '#475569', fontSize: 11 },
+  adCardRow: { flexDirection: 'row', gap: 8 },
 });

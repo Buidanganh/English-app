@@ -66,6 +66,8 @@ export const SubscriptionScreen: React.FC<Props> = ({ onBack, onSuccessUpgrade }
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingTier, setPendingTier] = useState<'PLUS' | 'PRO' | null>(null);
   const [pollCount, setPollCount] = useState(0);
+  const [xpRedeemData, setXpRedeemData] = useState<any>(null);
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   // Animation
   const successScale = useRef(new Animated.Value(0)).current;
@@ -77,6 +79,7 @@ export const SubscriptionScreen: React.FC<Props> = ({ onBack, onSuccessUpgrade }
   useEffect(() => {
     fetchPlans();
     checkExistingPaymentStatus();
+    fetchXpRedeemOptions();
   }, []);
 
   // Pulse animation for pending state
@@ -115,6 +118,53 @@ export const SubscriptionScreen: React.FC<Props> = ({ onBack, onSuccessUpgrade }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchXpRedeemOptions = async () => {
+    try {
+      const res = await api.get('/subscriptions/xp-redeem/options');
+      setXpRedeemData(res.data);
+    } catch (err) {
+      // Bỏ qua nếu chưa đăng nhập
+    }
+  };
+
+  const handleXpRedeem = (tier: 'PLUS' | 'PRO') => {
+    const option = xpRedeemData?.options?.find((o: any) => o.tier === tier);
+    if (!option) return;
+
+    if (!option.canRedeem) {
+      Alert.alert(
+        '⚠️ Chưa đủ XP',
+        `Bạn cần thêm ${option.xpShortfall.toLocaleString()} XP nữa để đổi gói này.\n\nHãy tiếp tục học bài, làm nhiệm vụ và giữ chuỗi Streak để kiếm XP!`,
+      );
+      return;
+    }
+
+    Alert.alert(
+      `Đổi ${option.xpRequired.toLocaleString()} XP`,
+      `Xác nhận dùng ${option.xpRequired.toLocaleString()} XP để kích hoạt gói ${option.badge} 1 tháng?\n\nXP còn lại: ${(xpRedeemData.currentXp - option.xpRequired).toLocaleString()} XP`,
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: `✅ Xác Nhận Đổi`,
+          style: 'default',
+          onPress: async () => {
+            setIsRedeeming(true);
+            try {
+              const res = await api.post('/subscriptions/xp-redeem/confirm', { tier });
+              Alert.alert('🎉 Thành Công!', res.data.message);
+              await fetchProfile();
+              fetchXpRedeemOptions();
+            } catch (err: any) {
+              Alert.alert('Lỗi', err.response?.data?.message || 'Không thể đổi XP. Thử lại sau.');
+            } finally {
+              setIsRedeeming(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const checkExistingPaymentStatus = async () => {
@@ -509,6 +559,93 @@ export const SubscriptionScreen: React.FC<Props> = ({ onBack, onSuccessUpgrade }
             Gói được kích hoạt ngay sau khi admin xác minh (thường trong 5 phút)
           </Text>
         </View>
+
+        {/* ===== XP REDEEM SECTION ===== */}
+        {xpRedeemData && (
+          <View style={styles.xpRedeemSection}>
+            {/* Header */}
+            <View style={styles.xpRedeemHeader}>
+              <Text style={styles.xpRedeemTitle}>⚡ Đổi XP Lấy Gói VIP</Text>
+              <View style={styles.xpCurrentBadge}>
+                <Text style={styles.xpCurrentText}>⭐ {xpRedeemData.currentXp?.toLocaleString()} XP</Text>
+              </View>
+            </View>
+            <Text style={styles.xpRedeemDesc}>
+              Tích lũy XP từ học bài, nhiệm vụ và streak để đổi gói VIP hoàn toàn miễn phí!
+            </Text>
+
+            {/* Redeem Cards */}
+            {xpRedeemData.options?.map((opt: any) => (
+              <View
+                key={opt.tier}
+                style={[
+                  styles.xpRedeemCard,
+                  { borderColor: opt.canRedeem ? opt.color : '#334155' },
+                  opt.canRedeem && styles.xpRedeemCardActive,
+                ]}
+              >
+                {/* Left */}
+                <View style={styles.xpRedeemCardLeft}>
+                  <View style={[styles.xpRedeemTierBadge, { backgroundColor: opt.color + '22', borderColor: opt.color }]}>
+                    <Text style={[styles.xpRedeemTierText, { color: opt.color }]}>{opt.badge}</Text>
+                  </View>
+                  <Text style={styles.xpRedeemLabel}>{opt.label}</Text>
+                  <Text style={styles.xpRedeemCardDesc} numberOfLines={2}>{opt.description}</Text>
+
+                  {/* XP Progress */}
+                  <View style={styles.xpProgressRow}>
+                    <View style={styles.xpProgressTrack}>
+                      <View style={[styles.xpProgressFill, {
+                        width: `${Math.min(100, ((xpRedeemData.currentXp || 0) / opt.xpRequired) * 100)}%` as any,
+                        backgroundColor: opt.canRedeem ? opt.color : '#64748B',
+                      }]} />
+                    </View>
+                    <Text style={[styles.xpProgressLabel, { color: opt.canRedeem ? opt.color : '#64748B' }]}>
+                      {(xpRedeemData.currentXp || 0).toLocaleString()}/{opt.xpRequired.toLocaleString()}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Right: CTA */}
+                <TouchableOpacity
+                  style={[
+                    styles.xpRedeemBtn,
+                    opt.canRedeem
+                      ? { backgroundColor: opt.color }
+                      : styles.xpRedeemBtnLocked,
+                  ]}
+                  onPress={() => handleXpRedeem(opt.tier)}
+                  disabled={isRedeeming}
+                  activeOpacity={0.85}
+                >
+                  {isRedeeming ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : opt.canRedeem ? (
+                    <>
+                      <Text style={styles.xpRedeemBtnText}>Đổi Ngay</Text>
+                      <Text style={styles.xpRedeemBtnXp}>-{opt.xpRequired.toLocaleString()}</Text>
+                      <Text style={styles.xpRedeemBtnXp}>XP</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.xpRedeemBtnTextLocked}>🔒</Text>
+                      <Text style={styles.xpRedeemBtnShortfall}>Cần thêm</Text>
+                      <Text style={styles.xpRedeemBtnShortfall}>+{opt.xpShortfall?.toLocaleString()}</Text>
+                      <Text style={styles.xpRedeemBtnShortfall}>XP</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            {/* How to earn XP */}
+            <View style={styles.xpEarnTips}>
+              <Text style={styles.xpEarnTipsTitle}>💡 Cách kiếm XP nhanh:</Text>
+              <Text style={styles.xpEarnTip}>📚 Hoàn thành bài học • 🎯 Nhiệm vụ hàng ngày • 🔥 Duy trì Streak • ⚔️ Voice Battle</Text>
+            </View>
+          </View>
+        )}
+
       </ScrollView>
 
       {/* ===== Modal QR VietQR ===== */}
@@ -983,4 +1120,103 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     paddingBottom: 10,
   },
+
+  // ===== XP REDEEM SECTION =====
+  xpRedeemSection: {
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#1E3A5F',
+    gap: 14,
+    marginTop: 4,
+  },
+  xpRedeemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  xpRedeemTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
+  xpCurrentBadge: {
+    backgroundColor: '#1E3A5F',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+  },
+  xpCurrentText: { color: '#38BDF8', fontWeight: '900', fontSize: 13 },
+  xpRedeemDesc: { color: '#64748B', fontSize: 12, lineHeight: 18 },
+
+  // Card
+  xpRedeemCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 12,
+    borderWidth: 1.5,
+  },
+  xpRedeemCardActive: {
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  xpRedeemCardLeft: { flex: 1, gap: 6 },
+  xpRedeemTierBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  xpRedeemTierText: { fontWeight: '900', fontSize: 13 },
+  xpRedeemLabel: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
+  xpRedeemCardDesc: { color: '#64748B', fontSize: 11, lineHeight: 16 },
+
+  // Progress
+  xpProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  xpProgressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#334155',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  xpProgressFill: { height: '100%', borderRadius: 3 },
+  xpProgressLabel: { fontSize: 10, fontWeight: '800', minWidth: 70, textAlign: 'right' },
+
+  // CTA Button
+  xpRedeemBtn: {
+    width: 72,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  xpRedeemBtnLocked: {
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  xpRedeemBtnText: { color: '#0F172A', fontWeight: '900', fontSize: 12 },
+  xpRedeemBtnXp: { color: '#0F172A', fontWeight: '800', fontSize: 10 },
+  xpRedeemBtnTextLocked: { fontSize: 18 },
+  xpRedeemBtnShortfall: { color: '#64748B', fontSize: 9, fontWeight: '700', textAlign: 'center' },
+
+  // Tips
+  xpEarnTips: {
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    padding: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  xpEarnTipsTitle: { color: '#FFFFFF', fontWeight: '800', fontSize: 12, marginBottom: 2 },
+  xpEarnTip: { color: '#64748B', fontSize: 11, lineHeight: 18 },
 });
