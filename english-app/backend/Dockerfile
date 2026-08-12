@@ -6,8 +6,11 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Cài TẤT CẢ dependencies (kể cả devDependencies để build được)
+# Cài TẤT CẢ dependencies kể cả devDependencies
 RUN npm install --include=dev
+
+# Cấp quyền execute cho các binary trong node_modules/.bin
+RUN chmod -R +x node_modules/.bin
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -15,11 +18,11 @@ RUN npx prisma generate
 # Copy toàn bộ source code
 COPY . .
 
-# Build NestJS
-RUN npm run build
+# Build NestJS dùng npx để tránh permission issue
+RUN npx nest build
 
 # ================================
-# Production stage — chỉ giữ thứ cần thiết
+# Production stage
 # ================================
 FROM node:20-alpine AS production
 
@@ -31,7 +34,10 @@ COPY prisma ./prisma/
 # Chỉ cài production deps
 RUN npm install --omit=dev
 
-# Copy Prisma client đã generate
+# Cấp quyền cho prisma binary
+RUN chmod -R +x node_modules/.bin
+
+# Copy Prisma client đã generate từ builder
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
