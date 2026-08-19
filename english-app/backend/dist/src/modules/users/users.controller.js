@@ -36,6 +36,9 @@ let UsersController = class UsersController {
     async resetLeaderboard() {
         return this.usersService.resetWeeklyLeaderboard();
     }
+    async grantAdReward(req, dto) {
+        return this.usersService.grantAdReward(req.user.id, dto.rewardType, dto.amount);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -87,6 +90,17 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "resetLeaderboard", null);
+__decorate([
+    (0, common_1.Post)('ad-reward'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Ghi nhận phần thưởng sau khi user xem quảng cáo (XP, Hearts, Streak Freeze)' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "grantAdReward", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('Users - Quản lý Học Viên & Thống kê Analytics'),
     (0, common_1.Controller)('users'),

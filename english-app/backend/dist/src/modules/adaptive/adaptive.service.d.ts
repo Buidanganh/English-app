@@ -10,7 +10,7 @@ export declare class AdaptiveService {
             masteryPercent: number;
             needsReviewCount: number;
             notStartedCount: number;
-            weakVocabCount: any;
+            weakVocabCount: number;
         };
         recommendations: any[];
         needsReview: any[];
@@ -27,10 +27,28 @@ export declare class AdaptiveService {
             medium: any;
             hard: any;
         }[];
-        weakVocabs: any;
+        weakVocabs: {
+            id: any;
+            word: any;
+            ipa: any;
+            meaning: any;
+            status: any;
+            reviewCount: any;
+            nextReviewAt: any;
+        }[];
     }>;
     updateVocabMastery(userId: string, lessonId: string, correctVocabIds: string[], incorrectVocabIds: string[]): Promise<{
         updated: number;
     }>;
-    getTodayReviewWords(userId: string): Promise<any>;
+    getTodayReviewWords(userId: string): Promise<{
+        id: string;
+        word: string;
+        ipa: string;
+        meaning: string;
+        exampleSentence: string;
+        exampleTranslation: string;
+        status: string;
+        reviewCount: number;
+        daysSinceLastReview: number;
+    }[]>;
 }

@@ -66,4 +66,19 @@ export declare class UsersController {
         message: string;
         topWinners: string[];
     }>;
+    grantAdReward(req: any, dto: {
+        rewardType: string;
+        amount: number;
+    }): Promise<{
+        success: boolean;
+        rewardType: string;
+        amount: number;
+        message: string;
+        user: {
+            id: string;
+            subscriptionTier: string;
+            streakCount: number;
+            totalXp: number;
+        };
+    }>;
 }

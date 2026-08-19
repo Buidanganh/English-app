@@ -4,10 +4,10 @@ export declare class RoleplayService {
     constructor(prisma: PrismaService);
     getScenarios(): Promise<{
         id: string;
-        createdAt: Date;
         title: string;
         description: string | null;
         orderIndex: number;
+        createdAt: Date;
         category: string;
         icon: string;
         initialMessage: string;
@@ -17,10 +17,10 @@ export declare class RoleplayService {
     startSession(userId: string, scenarioId: string): Promise<{
         scenario: {
             id: string;
-            createdAt: Date;
             title: string;
             description: string | null;
             orderIndex: number;
+            createdAt: Date;
             category: string;
             icon: string;
             initialMessage: string;

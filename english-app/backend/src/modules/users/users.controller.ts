@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -46,5 +46,19 @@ export class UsersController {
   @ApiOperation({ summary: 'Thực hiện Reset Giải Đấu Hàng Tuần & Trao Thưởng Top 3 (+500 XP)' })
   async resetLeaderboard() {
     return this.usersService.resetWeeklyLeaderboard();
+  }
+
+  // ============================================================
+  // AD REWARD — Nhận thưởng sau khi xem quảng cáo thành công
+  // ============================================================
+  @Post('ad-reward')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ghi nhận phần thưởng sau khi user xem quảng cáo (XP, Hearts, Streak Freeze)' })
+  async grantAdReward(
+    @Request() req,
+    @Body() dto: { rewardType: string; amount: number },
+  ) {
+    return this.usersService.grantAdReward(req.user.id, dto.rewardType, dto.amount);
   }
 }

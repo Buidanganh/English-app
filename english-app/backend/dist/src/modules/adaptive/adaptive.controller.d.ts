@@ -10,7 +10,7 @@ export declare class AdaptiveController {
             masteryPercent: number;
             needsReviewCount: number;
             notStartedCount: number;
-            weakVocabCount: any;
+            weakVocabCount: number;
         };
         recommendations: any[];
         needsReview: any[];
@@ -27,9 +27,27 @@ export declare class AdaptiveController {
             medium: any;
             hard: any;
         }[];
-        weakVocabs: any;
+        weakVocabs: {
+            id: any;
+            word: any;
+            ipa: any;
+            meaning: any;
+            status: any;
+            reviewCount: any;
+            nextReviewAt: any;
+        }[];
     }>;
-    getTodayReviewWords(req: any): Promise<any>;
+    getTodayReviewWords(req: any): Promise<{
+        id: string;
+        word: string;
+        ipa: string;
+        meaning: string;
+        exampleSentence: string;
+        exampleTranslation: string;
+        status: string;
+        reviewCount: number;
+        daysSinceLastReview: number;
+    }[]>;
     updateVocabMastery(req: any, dto: {
         lessonId: string;
         correctVocabIds: string[];

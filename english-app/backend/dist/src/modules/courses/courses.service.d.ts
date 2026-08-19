@@ -15,51 +15,51 @@ export declare class CoursesService implements OnModuleInit {
                 xpReward: number;
             }[];
             id: string;
-            createdAt: Date;
             title: string;
             description: string | null;
             orderIndex: number;
+            createdAt: Date;
             courseId: string;
         }[];
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string | null;
         level: string;
         iconUrl: string | null;
         orderIndex: number;
         isPublished: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }[]>;
     findOne(id: string): Promise<{
         units: ({
             lessons: {
                 id: string;
-                createdAt: Date;
                 title: string;
                 description: string | null;
                 orderIndex: number;
+                createdAt: Date;
                 xpReward: number;
                 unitId: string;
             }[];
         } & {
             id: string;
-            createdAt: Date;
             title: string;
             description: string | null;
             orderIndex: number;
+            createdAt: Date;
             courseId: string;
         })[];
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string | null;
         level: string;
         iconUrl: string | null;
         orderIndex: number;
         isPublished: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     autoSeedAllTopics(): Promise<void>;
     getUnitTest(unitId: string): Promise<{

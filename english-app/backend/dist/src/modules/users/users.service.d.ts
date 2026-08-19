@@ -118,4 +118,16 @@ export declare class UsersService {
         message: string;
         topWinners: string[];
     }>;
+    grantAdReward(userId: string, rewardType: string, amount: number): Promise<{
+        success: boolean;
+        rewardType: string;
+        amount: number;
+        message: string;
+        user: {
+            id: string;
+            subscriptionTier: string;
+            streakCount: number;
+            totalXp: number;
+        };
+    }>;
 }

@@ -29,7 +29,7 @@ export class AdaptiveService {
     const progressMap = new Map(userProgresses.map(p => [p.lessonId, p]));
 
     // 3. Lấy từ vựng user đang học yếu
-    const weakVocabs = await (this.prisma as any).userVocabulary
+    const weakVocabs = await this.prisma.userVocabulary
       .findMany({
         where: {
           userId,
@@ -181,7 +181,7 @@ export class AdaptiveService {
     // Xử lý từ đúng → tiến lên LEARNING hoặc MASTERED
     for (const vocabId of correctVocabIds) {
       try {
-        const existing = await (this.prisma as any).userVocabulary.findUnique({
+        const existing = await this.prisma.userVocabulary.findUnique({
           where: { userId_vocabularyId: { userId, vocabularyId: vocabId } },
         }).catch(() => null);
 
@@ -191,7 +191,7 @@ export class AdaptiveService {
         const nextReviewAt = new Date(now.getTime() + daysUntilReview * 24 * 60 * 60 * 1000);
         const newStatus = reviewCount >= 4 ? 'MASTERED' : 'LEARNING';
 
-        await (this.prisma as any).userVocabulary.upsert({
+        await this.prisma.userVocabulary.upsert({
           where: { userId_vocabularyId: { userId, vocabularyId: vocabId } },
           create: { userId, vocabularyId: vocabId, status: 'LEARNING', reviewCount: 1, nextReviewAt },
           update: { status: newStatus, reviewCount, nextReviewAt },
@@ -203,7 +203,7 @@ export class AdaptiveService {
     for (const vocabId of incorrectVocabIds) {
       try {
         const nextReviewAt = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 tiếng sau
-        await (this.prisma as any).userVocabulary.upsert({
+        await this.prisma.userVocabulary.upsert({
           where: { userId_vocabularyId: { userId, vocabularyId: vocabId } },
           create: { userId, vocabularyId: vocabId, status: 'LEARNING', reviewCount: 0, nextReviewAt },
           update: { status: 'LEARNING', nextReviewAt },
@@ -219,7 +219,7 @@ export class AdaptiveService {
    */
   async getTodayReviewWords(userId: string) {
     try {
-      const words = await (this.prisma as any).userVocabulary.findMany({
+      const words = await this.prisma.userVocabulary.findMany({
         where: {
           userId,
           nextReviewAt: { lte: new Date() },
@@ -230,7 +230,7 @@ export class AdaptiveService {
         take: 20,
       });
 
-      return words.map((uv: any) => ({
+      return words.map((uv) => ({
         id: uv.vocabulary.id,
         word: uv.vocabulary.word,
         ipa: uv.vocabulary.ipa,

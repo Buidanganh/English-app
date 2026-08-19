@@ -188,6 +188,45 @@ let UsersService = class UsersService {
             topWinners: topUsers.map((u) => u.fullName),
         };
     }
+    async grantAdReward(userId, rewardType, amount) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('Người dùng không tồn tại');
+        let updateData = {};
+        switch (rewardType) {
+            case 'XP':
+                updateData = { totalXp: { increment: amount } };
+                break;
+            case 'HEART':
+                updateData = { totalXp: { increment: amount * 5 } };
+                break;
+            case 'STREAK_FREEZE':
+                updateData = { totalXp: { increment: 20 } };
+                break;
+            case 'REPLAY':
+                updateData = {};
+                break;
+            default:
+                updateData = { totalXp: { increment: amount } };
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: updateData,
+            select: {
+                id: true,
+                totalXp: true,
+                streakCount: true,
+                subscriptionTier: true,
+            },
+        });
+        return {
+            success: true,
+            rewardType,
+            amount,
+            message: `🎉 Đã nhận ${amount} ${rewardType} từ quảng cáo!`,
+            user: updatedUser,
+        };
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

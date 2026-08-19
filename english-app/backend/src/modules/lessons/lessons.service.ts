@@ -99,19 +99,28 @@ export class LessonsService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     const currentUnlockedIndex = user?.unlockedUnitIndex || 1;
 
-    let xpToAdd = isPassed ? 100 : lesson.xpReward;
+    let xpToAdd = isPassed ? Math.max(lesson.xpReward, 100) : lesson.xpReward;
     let nextUnlockedIndex = currentUnlockedIndex;
 
     if (isPassed && lesson.unit) {
       nextUnlockedIndex = Math.max(currentUnlockedIndex, lesson.unit.orderIndex + 1);
     }
 
+    // Fix streak: chỉ tăng nếu hôm nay chưa học (so sánh ngày lastActiveDate)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastActive = user?.lastActiveDate ? new Date(user.lastActiveDate) : null;
+    lastActive?.setHours(0, 0, 0, 0);
+    const isFirstActivityToday = !lastActive || lastActive.getTime() < today.getTime();
+
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: {
         totalXp: { increment: xpToAdd },
         unlockedUnitIndex: nextUnlockedIndex,
-        streakCount: { increment: 1 },
+        lastActiveDate: new Date(),
+        // Chỉ tăng streak nếu là lần hoạt động đầu tiên trong ngày
+        ...(isFirstActivityToday ? { streakCount: { increment: 1 } } : {}),
       },
     });
 

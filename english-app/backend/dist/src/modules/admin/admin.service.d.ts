@@ -14,6 +14,7 @@ export declare class AdminService {
         };
         recentUsers: {
             id: string;
+            createdAt: Date;
             email: string;
             fullName: string;
             role: string;
@@ -21,13 +22,14 @@ export declare class AdminService {
             subscriptionExpiresAt: Date;
             streakCount: number;
             totalXp: number;
-            createdAt: Date;
         }[];
     }>;
     updateUserTier(userId: string, tier: 'FREE' | 'PLUS' | 'PRO'): Promise<{
         message: string;
         user: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
             email: string;
             passwordHash: string;
             fullName: string | null;
@@ -42,8 +44,6 @@ export declare class AdminService {
             unlockedUnitIndex: number;
             lastClaimedRewardDate: Date | null;
             lastActiveDate: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
     }>;
 }

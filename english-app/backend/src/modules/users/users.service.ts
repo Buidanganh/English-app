@@ -193,4 +193,61 @@ export class UsersService {
       topWinners: topUsers.map((u) => u.fullName),
     };
   }
+
+  // ============================================================
+  // AD REWARD — Cộng thưởng sau khi user xem quảng cáo thành công
+  // ============================================================
+  async grantAdReward(userId: string, rewardType: string, amount: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Người dùng không tồn tại');
+
+    // Giới hạn: mỗi loại reward tối đa 5 lần/ngày
+    // (tạm thời không check, có thể thêm sau với Redis/DB counter)
+
+    let updateData: any = {};
+
+    switch (rewardType) {
+      case 'XP':
+        // Cộng XP cho user
+        updateData = { totalXp: { increment: amount } };
+        break;
+
+      case 'HEART':
+        // Không có hearts model — cộng XP thay thế (1 heart = 5 XP)
+        updateData = { totalXp: { increment: amount * 5 } };
+        break;
+
+      case 'STREAK_FREEZE':
+        // Không mất streak trong ngày hôm nay — cộng thêm bonus XP nhỏ
+        updateData = { totalXp: { increment: 20 } };
+        break;
+
+      case 'REPLAY':
+        // Chơi lại miễn phí — không thay đổi DB
+        updateData = {};
+        break;
+
+      default:
+        updateData = { totalXp: { increment: amount } };
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        totalXp: true,
+        streakCount: true,
+        subscriptionTier: true,
+      },
+    });
+
+    return {
+      success: true,
+      rewardType,
+      amount,
+      message: `🎉 Đã nhận ${amount} ${rewardType} từ quảng cáo!`,
+      user: updatedUser,
+    };
+  }
 }

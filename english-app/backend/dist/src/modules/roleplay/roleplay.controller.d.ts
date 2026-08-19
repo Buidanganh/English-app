@@ -5,10 +5,10 @@ export declare class RoleplayController {
     constructor(roleplayService: RoleplayService);
     getScenarios(): Promise<{
         id: string;
-        createdAt: Date;
         title: string;
         description: string | null;
         orderIndex: number;
+        createdAt: Date;
         category: string;
         icon: string;
         initialMessage: string;
@@ -17,10 +17,10 @@ export declare class RoleplayController {
     startSession(req: any, dto: StartSessionDto): Promise<{
         scenario: {
             id: string;
-            createdAt: Date;
             title: string;
             description: string | null;
             orderIndex: number;
+            createdAt: Date;
             category: string;
             icon: string;
             initialMessage: string;
