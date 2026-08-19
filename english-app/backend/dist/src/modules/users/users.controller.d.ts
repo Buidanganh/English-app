@@ -5,6 +5,7 @@ export declare class UsersController {
     getAnalytics(req: any): Promise<{
         user: {
             id: string;
+            createdAt: Date;
             email: string;
             fullName: string;
             avatarUrl: string;
@@ -17,7 +18,6 @@ export declare class UsersController {
             battleTrophies: number;
             unlockedUnitIndex: number;
             lastActiveDate: Date;
-            createdAt: Date;
         };
         stats: {
             totalXp: number;

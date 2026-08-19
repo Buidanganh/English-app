@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-const BASE_URL = Platform.OS === 'web' ? 'http://localhost:3000' : 'http://192.168.0.143:3000';
+const BASE_URL = 'https://caring-flow-production-4f54.up.railway.app';
 
 export const api = axios.create({
   baseURL: BASE_URL,

@@ -11,6 +11,7 @@ export declare class AuthService {
         accessToken: string;
         user: {
             id: string;
+            createdAt: Date;
             email: string;
             fullName: string;
             role: string;
@@ -20,7 +21,6 @@ export declare class AuthService {
             battleWins: number;
             battleTrophies: number;
             unlockedUnitIndex: number;
-            createdAt: Date;
         };
     }>;
     login(loginDto: LoginDto): Promise<{
@@ -28,6 +28,8 @@ export declare class AuthService {
         accessToken: string;
         user: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
             email: string;
             fullName: string | null;
             avatarUrl: string | null;
@@ -41,8 +43,6 @@ export declare class AuthService {
             unlockedUnitIndex: number;
             lastClaimedRewardDate: Date | null;
             lastActiveDate: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
     }>;
     private generateToken;

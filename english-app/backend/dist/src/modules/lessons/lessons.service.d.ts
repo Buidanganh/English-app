@@ -44,12 +44,12 @@ export declare class LessonsService {
             vocabularyId: string;
         })[];
         id: string;
-        unitId: string;
         title: string;
         description: string | null;
-        xpReward: number;
         orderIndex: number;
         createdAt: Date;
+        xpReward: number;
+        unitId: string;
     }>;
     completeLesson(userId: string, lessonId: string, score: number): Promise<{
         message: string;
@@ -63,8 +63,8 @@ export declare class LessonsService {
             id: string;
             lessonId: string;
             userId: string;
-            isCompleted: boolean;
             score: number;
+            isCompleted: boolean;
             completedAt: Date;
         };
     }>;

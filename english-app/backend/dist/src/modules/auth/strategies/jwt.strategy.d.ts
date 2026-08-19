@@ -9,6 +9,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         email: string;
     }): Promise<{
         id: string;
+        createdAt: Date;
         email: string;
         fullName: string;
         avatarUrl: string;
@@ -21,7 +22,6 @@ export declare class JwtStrategy extends JwtStrategy_base {
         battleTrophies: number;
         unlockedUnitIndex: number;
         lastActiveDate: Date;
-        createdAt: Date;
     }>;
 }
 export {};

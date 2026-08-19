@@ -4,6 +4,8 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     findByEmail(email: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         email: string;
         passwordHash: string;
         fullName: string | null;
@@ -18,11 +20,10 @@ export declare class UsersService {
         unlockedUnitIndex: number;
         lastClaimedRewardDate: Date | null;
         lastActiveDate: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findById(id: string): Promise<{
         id: string;
+        createdAt: Date;
         email: string;
         fullName: string;
         avatarUrl: string;
@@ -35,7 +36,6 @@ export declare class UsersService {
         battleTrophies: number;
         unlockedUnitIndex: number;
         lastActiveDate: Date;
-        createdAt: Date;
     }>;
     createUser(data: {
         email: string;
@@ -43,6 +43,7 @@ export declare class UsersService {
         fullName: string;
     }): Promise<{
         id: string;
+        createdAt: Date;
         email: string;
         fullName: string;
         role: string;
@@ -52,11 +53,11 @@ export declare class UsersService {
         battleWins: number;
         battleTrophies: number;
         unlockedUnitIndex: number;
-        createdAt: Date;
     }>;
     getAnalytics(userId: string): Promise<{
         user: {
             id: string;
+            createdAt: Date;
             email: string;
             fullName: string;
             avatarUrl: string;
@@ -69,7 +70,6 @@ export declare class UsersService {
             battleTrophies: number;
             unlockedUnitIndex: number;
             lastActiveDate: Date;
-            createdAt: Date;
         };
         stats: {
             totalXp: number;
