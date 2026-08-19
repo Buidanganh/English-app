@@ -1,16 +1,16 @@
-FROM node:20-alpine AS builder
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files
+# Cài openssl (cần cho Prisma)
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+# Copy package files trước
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Cài TẤT CẢ dependencies kể cả devDependencies
-RUN npm install --include=dev
-
-# Cấp quyền execute cho các binary trong node_modules/.bin
-RUN chmod -R +x node_modules/.bin
+# Cài TẤT CẢ dependencies (kể cả dev)
+RUN npm install
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -18,31 +18,8 @@ RUN npx prisma generate
 # Copy toàn bộ source code
 COPY . .
 
-# Build NestJS dùng npx để tránh permission issue
-RUN npx nest build
-
-# ================================
-# Production stage
-# ================================
-FROM node:20-alpine AS production
-
-WORKDIR /app
-
-COPY package*.json ./
-COPY prisma ./prisma/
-
-# Chỉ cài production deps
-RUN npm install --omit=dev
-
-# Cấp quyền cho prisma binary
-RUN chmod -R +x node_modules/.bin
-
-# Copy Prisma client đã generate từ builder
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-
-# Copy built app
-COPY --from=builder /app/dist ./dist
+# Build NestJS
+RUN npm run build
 
 EXPOSE 3000
 
