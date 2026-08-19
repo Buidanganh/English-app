@@ -8,7 +8,7 @@ cmds = ["npm install --include=dev"]
 cmds = ["npx prisma generate", "npm run build"]
 
 [start]
-cmd = "npm run build && npx prisma db push && node dist/main"
+cmd = "node scripts/bootstrap-sqlite-db.js && npm run build && npx prisma db push && node dist/main"
 
 [variables]
 NODE_ENV = "production"
