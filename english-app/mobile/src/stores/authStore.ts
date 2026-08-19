@@ -25,73 +25,116 @@ interface AuthState {
   clearError: () => void;
 }
 
-// Khôi phục token từ storage nếu có
-const savedToken = typeof window !== 'undefined' && window.localStorage ? localStorage.getItem('access_token') : null;
-if (savedToken) {
-  setAuthToken(savedToken);
-}
+// ====================================================
+// Token storage — dùng biến module (in-memory)
+// Không dùng localStorage vì React Native không hỗ trợ
+// ====================================================
+let _cachedToken: string | null = null;
+
+const saveToken = (token: string | null) => {
+  _cachedToken = token;
+  setAuthToken(token);
+};
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  token: savedToken,
+  token: null,
   isLoading: false,
-  isInitializing: !!savedToken,
+  isInitializing: false,   // Không cần restore token từ storage nữa
   error: null,
 
+  // ==================================================
+  // ĐĂNG NHẬP
+  // ==================================================
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
       const res = await api.post('/auth/login', { email, password });
       const { accessToken, user } = res.data;
-      
-      setAuthToken(accessToken);
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('access_token', accessToken);
-      }
 
-      set({ token: accessToken, user, isLoading: false });
+      saveToken(accessToken);
+      set({ token: accessToken, user, isLoading: false, error: null });
       return true;
+
     } catch (err: any) {
       let message = 'Đăng nhập thất bại.';
-      if (err.response?.status === 401) {
-        message = '🔑 Email hoặc mật khẩu không chính xác! Vui lòng kiểm tra lại.';
-      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
-        message = '🔌 Không thể kết nối tới Backend Server! Hãy kiểm tra xem Server NestJS ở Terminal 1 (http://localhost:3000) đã chạy chưa.';
+
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        message = '⏱️ Server phản hồi quá chậm. Vui lòng thử lại.';
+      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        message = '🔌 Không thể kết nối tới Server. Kiểm tra mạng Internet.';
+      } else if (err.response?.status === 401) {
+        message = '🔑 Email hoặc mật khẩu không chính xác.';
+      } else if (err.response?.status === 400) {
+        const msgs = err.response?.data?.message;
+        message = Array.isArray(msgs) ? msgs.join('\n') : (msgs || 'Dữ liệu không hợp lệ.');
+      } else if (err.response?.status === 500) {
+        message = '🛠️ Server đang gặp sự cố. Vui lòng thử lại sau ít phút.';
       } else if (err.response?.data?.message) {
         const msg = err.response.data.message;
-        message = Array.isArray(msg) ? msg.join(', ') : msg;
+        message = Array.isArray(msg) ? msg.join('\n') : msg;
       }
+
+      // Log chi tiết để debug
+      console.error('[Login Error]', {
+        code: err.code,
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
+
       set({ error: message, isLoading: false });
       return false;
     }
   },
 
+  // ==================================================
+  // ĐĂNG KÝ
+  // ==================================================
   register: async (email, password, fullName) => {
     set({ isLoading: true, error: null });
     try {
       const res = await api.post('/auth/register', { email, password, fullName });
       const { accessToken, user } = res.data;
-      
-      setAuthToken(accessToken);
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('access_token', accessToken);
-      }
 
-      set({ token: accessToken, user, isLoading: false });
+      saveToken(accessToken);
+      set({ token: accessToken, user, isLoading: false, error: null });
       return true;
+
     } catch (err: any) {
       let message = 'Đăng ký thất bại.';
-      if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
-        message = '🔌 Không thể kết nối tới Backend Server! Hãy kiểm tra xem Server NestJS ở Terminal 1 (http://localhost:3000) đã chạy chưa.';
+
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        message = '⏱️ Server phản hồi quá chậm. Vui lòng thử lại.';
+      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        message = '🔌 Không thể kết nối tới Server. Kiểm tra mạng Internet.';
+      } else if (err.response?.status === 409) {
+        message = '📧 Email này đã được sử dụng. Vui lòng dùng email khác.';
+      } else if (err.response?.status === 400) {
+        const msgs = err.response?.data?.message;
+        message = Array.isArray(msgs) ? msgs.join('\n') : (msgs || 'Dữ liệu không hợp lệ.');
+      } else if (err.response?.status === 500) {
+        message = '🛠️ Server đang gặp sự cố. Vui lòng thử lại sau ít phút.';
       } else if (err.response?.data?.message) {
         const msg = err.response.data.message;
-        message = Array.isArray(msg) ? msg.join(', ') : msg;
+        message = Array.isArray(msg) ? msg.join('\n') : msg;
       }
+
+      console.error('[Register Error]', {
+        code: err.code,
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
+
       set({ error: message, isLoading: false });
       return false;
     }
   },
 
+  // ==================================================
+  // LẤY THÔNG TIN PROFILE (sau khi đã login)
+  // ==================================================
   fetchProfile: async () => {
     const { token } = get();
     if (!token) {
@@ -104,16 +147,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const res = await api.get('/auth/profile');
       set({ user: res.data, isInitializing: false });
     } catch (err) {
+      // Token hết hạn hoặc không hợp lệ → logout
       get().logout();
-      set({ isInitializing: false });
     }
   },
 
+  // ==================================================
+  // ĐĂNG XUẤT
+  // ==================================================
   logout: () => {
-    setAuthToken(null);
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem('access_token');
-    }
+    saveToken(null);
     set({ user: null, token: null, error: null, isInitializing: false });
   },
 
